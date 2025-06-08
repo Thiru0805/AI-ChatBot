@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import '../styles/chatWindow.css';
+import '../styles/chatOllama.css';
 
-export default function ChatWindow() {
+export default function ChatOllama() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hello! How can I assist you today?' }
+    { sender: 'bot', text: 'Hello! This is Ollama. How can I help you today?' }
   ]);
   const containerRef = useRef(null);
 
@@ -21,28 +21,20 @@ export default function ChatWindow() {
     setInput('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/chat', {
+      const res = await fetch('http://localhost:5000/api/chat-ollama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
       });
 
       const data = await res.json();
-      if (res.status === 429) {
+      if (!res.ok) {
         setMessages((prev) => [
           ...prev,
-          { sender: 'bot', text: data.error }
-        ]);
-      } else if (!res.ok) {
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'bot', text: 'Something went wrong. Please try again.' }
+          { sender: 'bot', text: data.error || 'Something went wrong. Please try again.' }
         ]);
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'bot', text: data.reply }
-        ]);
+        setMessages((prev) => [...prev, { sender: 'bot', text: data.data }]);
       }
     } catch (e) {
       console.error(e);
@@ -60,9 +52,18 @@ export default function ChatWindow() {
     }
   };
 
+  const handleBack = () => {
+    window.history.back();
+  };
+
   return (
-    <div className="chat-container">
-      <div className="chat-header">ChatBot OpenAI</div>
+    <div className="chat-container-ollama">
+      <header className="chat-header-ollama">
+        <button className="back-button" onClick={handleBack} aria-label="Go Back">
+          ← Back
+        </button>
+        🤖 Ollama Chat
+      </header>
       <div className="chat-messages" ref={containerRef}>
         {messages.map((m, i) => (
           <div key={i} className={`message ${m.sender}`}>
@@ -74,7 +75,7 @@ export default function ChatWindow() {
         <input
           className="chat-input"
           type="text"
-          placeholder="Type your message here..."
+          placeholder="Ask Ollama anything..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
